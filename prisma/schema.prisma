@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Monitor {
+  id         String        @id @default(cuid())
+  name       String
+  url        String
+  method     String        @default("GET")
+  headers    Json?
+  body       Json?
+  interval   Int           @default(60)
+  assertions Json          @default("[]")
+  active     Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  results    CheckResult[]
+  alertRules AlertRule[]
+}
+
+model CheckResult {
+  id            String   @id @default(cuid())
+  monitorId     String
+  monitor       Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  timestamp     DateTime @default(now())
+  passed        Boolean
+  statusCode    Int?
+  responseTime  Int
+  failureReason String?
+}
+
+model AlertRule {
+  id        String       @id @default(cuid())
+  monitorId String
+  monitor   Monitor      @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  channel   String
+  config    Json
+  events    AlertEvent[]
+}
+
+model AlertEvent {
+  id        String    @id @default(cuid())
+  ruleId    String
+  rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  monitorId String
+  sentAt    DateTime  @default(now())
+  type      String
+}
