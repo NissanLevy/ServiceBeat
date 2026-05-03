@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "worker": "tsx src/worker/index.ts",
+    "infra:up": "docker compose up postgres redis pgadmin -d",
+    "infra:down": "docker compose down",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate"
   },
