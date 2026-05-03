@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Service {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  monitors  Monitor[]
+}
+
 model Monitor {
   id         String        @id @default(cuid())
   name       String
@@ -17,6 +24,8 @@ model Monitor {
   interval   Int           @default(60)
   assertions Json          @default("[]")
   active     Boolean       @default(true)
+  serviceId  String?
+  service    Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   results    CheckResult[]

@@ -5,12 +5,23 @@ import AutoRefresh from "@/components/AutoRefresh";
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const monitors = await prisma.monitor.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      results: { orderBy: { timestamp: "desc" }, take: 1 },
-    },
-  });
+  const [monitors, services] = await Promise.all([
+    prisma.monitor.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        results: { orderBy: { timestamp: "desc" }, take: 1 },
+        service: true,
+      },
+    }),
+    prisma.service.findMany({ orderBy: { name: "asc" } }),
+  ]);
+
+  const grouped = services.map((s) => ({
+    service: s,
+    monitors: monitors.filter((m) => m.serviceId === s.id),
+  })).filter((g) => g.monitors.length > 0);
+
+  const ungrouped = monitors.filter((m) => !m.serviceId);
 
   return (
     <div>
@@ -29,30 +40,53 @@ export default async function DashboardPage() {
         <p className="text-gray-400 text-sm">No monitors yet. Create one to get started.</p>
       )}
 
-      <div className="space-y-3">
-        {monitors.map((m) => {
-          const last = m.results[0];
-          const status = !last ? "pending" : last.passed ? "up" : "down";
+      <div className="space-y-6">
+        {grouped.map(({ service, monitors: sMonitors }) => (
+          <div key={service.id}>
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              {service.name}
+            </h2>
+            <div className="space-y-2">
+              {sMonitors.map((m) => <MonitorRow key={m.id} monitor={m} />)}
+            </div>
+          </div>
+        ))}
 
-          return (
-            <Link
-              key={m.id}
-              href={`/monitors/${m.id}`}
-              className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg px-5 py-4 hover:border-gray-600 transition-colors"
-            >
-              <div>
-                <p className="font-medium text-white">{m.name}</p>
-                <p className="text-sm text-gray-400 mt-0.5">{m.url}</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-gray-500">every {m.interval}s</span>
-                <StatusBadge status={status} />
-              </div>
-            </Link>
-          );
-        })}
+        {ungrouped.length > 0 && (
+          <div>
+            {grouped.length > 0 && (
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Ungrouped
+              </h2>
+            )}
+            <div className="space-y-2">
+              {ungrouped.map((m) => <MonitorRow key={m.id} monitor={m} />)}
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: string; interval: number; results: { passed: boolean }[] } }) {
+  const last = monitor.results[0];
+  const status = !last ? "pending" : last.passed ? "up" : "down";
+
+  return (
+    <Link
+      href={`/monitors/${monitor.id}`}
+      className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg px-5 py-4 hover:border-gray-600 transition-colors"
+    >
+      <div>
+        <p className="font-medium text-white">{monitor.name}</p>
+        <p className="text-sm text-gray-400 mt-0.5">{monitor.url}</p>
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="text-xs text-gray-500">every {monitor.interval}s</span>
+        <StatusBadge status={status} />
+      </div>
+    </Link>
   );
 }
 

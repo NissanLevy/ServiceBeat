@@ -143,6 +143,12 @@ AlertEvent {
 - [ ] Email alert on failure + recovery
 - [ ] React UI: monitor list, create/edit form, status indicators
 
+### Phase 1.5 — Service Grouping
+- [ ] Add Service model to Prisma schema + migration
+- [ ] API routes: CRUD services
+- [ ] Monitor form: service dropdown + inline create
+- [ ] Dashboard: monitors grouped by service, ungrouped at bottom
+
 ### Phase 2 — Keyword + JSONPath Assertions
 - [ ] Extend checker: keyword scan on response body
 - [ ] Extend checker: jsonpath-plus + operators (eq, neq, contains, gt, lt)
