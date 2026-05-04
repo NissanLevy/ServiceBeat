@@ -12,7 +12,9 @@ export default auth((req) => {
   const isPasswordPage = pathname === "/account/password";
   const isPasswordApi = pathname === "/api/account/password";
 
-  if (isAuthRoute || isLoginPage) return NextResponse.next();
+  const isStatusPage = pathname.startsWith("/status");
+
+  if (isAuthRoute || isLoginPage || isStatusPage) return NextResponse.next();
   if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.nextUrl));
 
   if (!isPasswordPage && !isPasswordApi) {
