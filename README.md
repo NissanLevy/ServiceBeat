@@ -127,10 +127,19 @@ Multiple assertions are evaluated independently — all failures are reported in
 | Channel | Config fields |
 |---|---|
 | Email | `to` |
-| Slack | `webhookUrl` |
+| Slack | `url` (incoming webhook URL) |
 | Webhook | `url` |
+| PagerDuty | `integrationKey` |
 
 Alerts fire on state change: once when a monitor goes down (triggered) and once when it recovers (resolved).
+
+### PagerDuty setup
+
+1. In PagerDuty, go to **Services** → your service → **Integrations** → **Add integration**
+2. Select **Events API v2** and copy the **Integration Key**
+3. On the monitor detail page, add an alert rule → select **PagerDuty** → paste the integration key
+
+ServiceBeat sends a `trigger` event when the monitor goes down and a `resolve` event when it recovers. Both use the monitor ID as the dedup key so PagerDuty automatically resolves the incident — no manual cleanup needed.
 
 ## Database access (pgAdmin)
 
