@@ -1,0 +1,11 @@
+# Replace with your domain for automatic HTTPS via Let's Encrypt.
+# For LAN/local use, replace with your server's IP or "localhost".
+#
+# Examples:
+#   monitor.example.com        <- public domain, auto HTTPS
+#   192.168.1.100              <- LAN IP, Caddy uses self-signed cert
+#   localhost                  <- local only, self-signed cert
+
+your-domain.com {
+    reverse_proxy web:3000
+}

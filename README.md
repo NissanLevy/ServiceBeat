@@ -65,13 +65,31 @@ This builds and starts 5 containers: `web`, `worker`, `postgres`, `redis`, and `
 
 On first startup the web container runs migrations and creates the admin user from `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Subsequent restarts skip user creation if the account already exists.
 
-### 3. Open the app
+### 3. Configure your domain
+
+Edit `docker/caddy/Caddyfile` and replace `your-domain.com` with your actual domain or IP:
+
+```
+# Public domain — Caddy gets a Let's Encrypt cert automatically
+monitor.example.com {
+    reverse_proxy web:3000
+}
+
+# LAN / local IP — Caddy uses a self-signed cert
+192.168.1.100 {
+    reverse_proxy web:3000
+}
+```
+
+For a public domain, point your DNS A record at the server's IP before starting. Caddy handles certificate issuance and renewal automatically — ports 80 and 443 must be reachable.
+
+### 4. Open the app
 
 | Service | URL |
 |---|---|
-| Web app | http://localhost:3000 |
-| Public status page | http://localhost:3000/status |
-| pgAdmin | http://localhost:5050 |
+| Web app | https://your-domain.com |
+| Public status page | https://your-domain.com/status |
+| pgAdmin | http://your-server-ip:5050 |
 
 Log in with the `ADMIN_EMAIL` and `ADMIN_PASSWORD` you set.
 

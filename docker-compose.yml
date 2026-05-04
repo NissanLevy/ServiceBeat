@@ -42,12 +42,26 @@ services:
       postgres:
         condition: service_healthy
 
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     env_file: .env.docker
     depends_on:
       postgres:
@@ -72,3 +86,5 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin_data:
+  caddy_data:
+  caddy_config:
