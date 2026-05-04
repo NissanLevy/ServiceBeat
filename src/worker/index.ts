@@ -58,13 +58,18 @@ const worker = new Worker(
       },
     });
 
+    const now = new Date();
+    const inMaintenance = await prisma.maintenanceWindow.findFirst({
+      where: { monitorId, startsAt: { lte: now }, endsAt: { gte: now } },
+    });
+
     if (result.passed) {
       const openIncident = await prisma.incident.findFirst({ where: { monitorId, resolvedAt: null } });
       if (openIncident) {
         await prisma.incident.updateMany({ where: { monitorId, resolvedAt: null }, data: { resolvedAt: new Date() } });
         await dispatchAlerts(monitorId, "resolved", null);
       }
-    } else {
+    } else if (!inMaintenance) {
       const recentResults = await prisma.checkResult.findMany({
         where: { monitorId },
         orderBy: { timestamp: "desc" },
