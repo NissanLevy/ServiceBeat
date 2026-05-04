@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import DeleteButton from "./DeleteButton";
 import AutoRefresh from "@/components/AutoRefresh";
+import AlertsManager from "@/components/AlertsManager";
 
 export const revalidate = 0;
 
@@ -52,6 +53,16 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
         <StatCard label="Uptime (last 50)" value={`${uptime}%`} />
         <StatCard label="Avg Response" value={avgResponse ? `${avgResponse}ms` : "—"} />
         <StatCard label="Interval" value={`${monitor.interval}s`} />
+      </div>
+
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        Alert Rules
+      </h2>
+      <div className="mb-8">
+        <AlertsManager
+          monitorId={monitor.id}
+          initialRules={monitor.alertRules as { id: string; channel: string; config: Record<string, string> }[]}
+        />
       </div>
 
       <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
