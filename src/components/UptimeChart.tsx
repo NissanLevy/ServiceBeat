@@ -24,7 +24,7 @@ interface Props {
 }
 
 function formatTime(ts: string) {
-  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
 }
 
 export default function UptimeChart({ results }: Props) {

@@ -125,7 +125,7 @@ export default function UsersClient({
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Joined {new Date(u.createdAt).toLocaleDateString()}
+                  Joined {new Date(u.createdAt).toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })}
                 </p>
               </div>
               <div className="flex items-center gap-3">
