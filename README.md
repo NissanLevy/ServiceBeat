@@ -100,7 +100,13 @@ npm run docker:logs      # tail all container logs
 npm run docker:down      # stop everything
 ```
 
+### Testing the full Docker stack locally
+
+Set `docker/caddy/Caddyfile` to `localhost`, then `npm run docker:up`. Caddy will use a self-signed cert — accept the browser warning once, or run `caddy trust` to install Caddy's local CA and eliminate the warning permanently.
+
 ## Local development
+
+Caddy is only used in the full Docker stack. For day-to-day development you run the web app and worker directly — no HTTPS needed.
 
 ### 1. Start infrastructure only
 
