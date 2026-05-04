@@ -1,27 +1,41 @@
 import axios from "axios";
+import { JSONPath } from "jsonpath-plus";
 import type { Assertion, CheckInput, CheckOutput } from "./types";
 
-function evaluate(assertion: Assertion, statusCode: number, body: string): string | null {
+function compare(operator: string, actual: unknown, expected: unknown): boolean {
+  switch (operator) {
+    case "eq":      return actual == expected;
+    case "neq":     return actual != expected;
+    case "contains": return String(actual).includes(String(expected));
+    case "gt":      return Number(actual) > Number(expected);
+    case "lt":      return Number(actual) < Number(expected);
+    default:        return false;
+  }
+}
+
+function evaluate(assertion: Assertion, statusCode: number, body: string, parsed: unknown): string | null {
   if (assertion.type === "status_code") {
-    const actual = statusCode;
-    const expected = assertion.value;
-    if (assertion.operator === "eq" && actual !== expected)
-      return `Status code ${actual} !== ${expected}`;
-    if (assertion.operator === "neq" && actual === expected)
-      return `Status code ${actual} should not be ${expected}`;
-    if (assertion.operator === "gt" && actual <= expected)
-      return `Status code ${actual} is not > ${expected}`;
-    if (assertion.operator === "lt" && actual >= expected)
-      return `Status code ${actual} is not < ${expected}`;
+    if (!compare(assertion.operator, statusCode, assertion.value))
+      return `Status code ${statusCode} failed: expected ${assertion.operator} ${assertion.value}`;
     return null;
   }
 
   if (assertion.type === "keyword") {
-    const contains = body.includes(String(assertion.value));
-    if (assertion.operator === "contains" && !contains)
-      return `Response body does not contain "${assertion.value}"`;
-    if (assertion.operator === "neq" && contains)
-      return `Response body should not contain "${assertion.value}"`;
+    if (!compare(assertion.operator, body, assertion.value))
+      return assertion.operator === "contains"
+        ? `Response body does not contain "${assertion.value}"`
+        : `Response body should not contain "${assertion.value}"`;
+    return null;
+  }
+
+  if (assertion.type === "jsonpath") {
+    if (!parsed) return `JSONPath assertion requires a JSON response body`;
+    const results = JSONPath({ path: assertion.path, json: parsed as object });
+    if (!results || results.length === 0)
+      return `JSONPath "${assertion.path}" returned no match`;
+    const actual = results[0];
+    if (!compare(assertion.operator, actual, assertion.value))
+      return `JSONPath "${assertion.path}" = ${JSON.stringify(actual)} failed: expected ${assertion.operator} ${JSON.stringify(assertion.value)}`;
     return null;
   }
 
@@ -45,10 +59,12 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
     const body = typeof response.data === "string"
       ? response.data
       : JSON.stringify(response.data);
+    const parsed = typeof response.data === "object" ? response.data : (() => {
+      try { return JSON.parse(body); } catch { return null; }
+    })();
 
-    // Phase A: only status_code and keyword assertions
     for (const assertion of input.assertions) {
-      const failure = evaluate(assertion, response.status, body);
+      const failure = evaluate(assertion, response.status, body, parsed);
       if (failure) {
         return { passed: false, statusCode: response.status, responseTime, failureReason: failure };
       }

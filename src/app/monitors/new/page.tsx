@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AssertionBuilder from "@/components/AssertionBuilder";
+import type { Assertion } from "@/lib/checker/types";
 
 interface Service { id: string; name: string; }
 
@@ -11,13 +13,15 @@ export default function NewMonitorPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [newServiceName, setNewServiceName] = useState("");
   const [showNewService, setShowNewService] = useState(false);
+  const [assertions, setAssertions] = useState<Assertion[]>([
+    { type: "status_code", operator: "eq", value: 200 },
+  ]);
   const [form, setForm] = useState({
     name: "",
     url: "",
     method: "GET",
     interval: 60,
     alertEmail: "",
-    expectedStatus: 200,
     serviceId: "",
   });
 
@@ -52,7 +56,7 @@ export default function NewMonitorPage() {
           method: form.method,
           interval: form.interval,
           serviceId: form.serviceId || null,
-          assertions: [{ type: "status_code", operator: "eq", value: form.expectedStatus }],
+          assertions,
         }),
       });
       if (!res.ok) throw new Error("Failed to create monitor");
@@ -169,13 +173,8 @@ export default function NewMonitorPage() {
           </Field>
         </div>
 
-        <Field label="Expected Status Code">
-          <input
-            type="number"
-            value={form.expectedStatus}
-            onChange={(e) => setForm({ ...form, expectedStatus: Number(e.target.value) })}
-            className={inputCls}
-          />
+        <Field label="Assertions">
+          <AssertionBuilder assertions={assertions} onChange={setAssertions} />
         </Field>
 
         <Field label="Alert Email (optional)">

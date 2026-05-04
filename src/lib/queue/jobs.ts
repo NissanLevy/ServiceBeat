@@ -27,3 +27,16 @@ export async function removeMonitor(monitorId: string) {
   const job = repeatableJobs.find((j) => j.key.includes(`monitor-${monitorId}`));
   if (job) await getQueue().removeRepeatableByKey(job.key);
 }
+
+export async function scheduleCleanup() {
+  await getQueue().add(
+    "cleanup",
+    {},
+    {
+      jobId: "cleanup",
+      repeat: { every: 24 * 60 * 60 * 1000 },
+      removeOnComplete: { count: 1 },
+      removeOnFail: { count: 1 },
+    }
+  );
+}
