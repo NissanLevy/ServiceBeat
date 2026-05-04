@@ -63,11 +63,17 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
       try { return JSON.parse(body); } catch { return null; }
     })();
 
-    for (const assertion of input.assertions) {
-      const failure = evaluate(assertion, response.status, body, parsed);
-      if (failure) {
-        return { passed: false, statusCode: response.status, responseTime, failureReason: failure };
-      }
+    const failures = input.assertions
+      .map((a) => evaluate(a, response.status, body, parsed))
+      .filter((f): f is string => f !== null);
+
+    if (failures.length > 0) {
+      return {
+        passed: false,
+        statusCode: response.status,
+        responseTime,
+        failureReason: failures.join("\n"),
+      };
     }
 
     return { passed: true, statusCode: response.status, responseTime, failureReason: null };

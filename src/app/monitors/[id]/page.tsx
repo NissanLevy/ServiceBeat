@@ -79,28 +79,33 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
         Recent Checks
       </h2>
       <div className="space-y-2">
-        {monitor.results.map((r) => (
+        {monitor.results.map((r) => {
+          const failures = r.failureReason ? r.failureReason.split("\n") : [];
+          return (
           <div
             key={r.id}
-            className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-md px-4 py-3 text-sm"
+            className={`bg-gray-900 border rounded-md px-4 py-3 text-sm ${!r.passed ? "border-red-900/50" : "border-gray-800"}`}
           >
-            <div className="flex items-center gap-3">
-              <span
-                className={`w-2 h-2 rounded-full ${r.passed ? "bg-green-500" : "bg-red-500"}`}
-              />
-              <span className="text-gray-300">
-                {new Date(r.timestamp).toLocaleString()}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className={`w-2 h-2 rounded-full ${r.passed ? "bg-green-500" : "bg-red-500"}`} />
+                <span className="text-gray-300">{new Date(r.timestamp).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-4 text-gray-400">
+                {r.statusCode && <span>HTTP {r.statusCode}</span>}
+                <span>{r.responseTime}ms</span>
+              </div>
             </div>
-            <div className="flex items-center gap-4 text-gray-400">
-              {r.statusCode && <span>HTTP {r.statusCode}</span>}
-              <span>{r.responseTime}ms</span>
-              {!r.passed && r.failureReason && (
-                <span className="text-red-400 max-w-xs truncate">{r.failureReason}</span>
-              )}
-            </div>
+            {failures.length > 0 && (
+              <div className="mt-2 pl-5 space-y-0.5">
+                {failures.map((f, i) => (
+                  <p key={i} className="text-red-400 text-xs">{f}</p>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+          );
+        })}
         {monitor.results.length === 0 && (
           <p className="text-gray-500 text-sm">No checks yet — worker will run on the next interval.</p>
         )}
