@@ -37,7 +37,15 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
           <h1 className="text-2xl font-bold mt-1">{monitor.name}</h1>
           <p className="text-gray-400 text-sm mt-0.5">{monitor.url}</p>
         </div>
-        <DeleteButton monitorId={monitor.id} />
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/monitors/${monitor.id}/edit`}
+            className="text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-md transition-colors"
+          >
+            Edit
+          </Link>
+          <DeleteButton monitorId={monitor.id} />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
