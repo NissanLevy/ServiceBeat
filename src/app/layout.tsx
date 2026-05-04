@@ -15,9 +15,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="bg-gray-950 text-gray-100 min-h-screen">
         <nav className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-          <a href="/" className="text-lg font-semibold tracking-tight text-white">
-            ServiceBeat
-          </a>
+          <div className="flex items-center gap-6">
+            <a href="/" className="text-lg font-semibold tracking-tight text-white">
+              ServiceBeat
+            </a>
+            <a href="/services" className="text-sm text-gray-400 hover:text-white">
+              Services
+            </a>
+          </div>
           {session?.user && (
             <div className="flex items-center gap-4">
               <span className="text-xs text-gray-500">{session.user.email}</span>
