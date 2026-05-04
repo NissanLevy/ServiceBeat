@@ -20,7 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user) return null;
         const valid = await bcrypt.compare(String(credentials.password), user.password);
         if (!valid) return null;
-        return { id: user.id, email: user.email, role: user.role };
+        return { id: user.id, email: user.email, role: user.role, passwordChangedAt: user.passwordChangedAt?.toISOString() ?? null };
       },
     }),
   ],
@@ -29,12 +29,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role: string }).role;
+        token.passwordChangedAt = (user as { passwordChangedAt: string | null }).passwordChangedAt;
       }
       return token;
     },
     session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as string;
+      session.user.passwordChangedAt = token.passwordChangedAt as string | null;
       return session;
     },
   },

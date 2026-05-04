@@ -31,6 +31,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {session?.user && (
             <div className="flex items-center gap-4">
               <span className="text-xs text-gray-500">{session.user.email}</span>
+              <a href="/account/password" className="text-xs text-gray-400 hover:text-white">
+                Change password
+              </a>
               <SignOutButton />
             </div>
           )}

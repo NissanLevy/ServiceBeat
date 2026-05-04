@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const passwordChanged = searchParams.get("passwordChanged") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,6 +37,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-white mb-1">ServiceBeat</h1>
         <p className="text-gray-400 text-sm mb-8">Sign in to your account</p>
+
+        {passwordChanged && (
+          <div className="mb-6 bg-green-900/30 border border-green-700/50 rounded-md px-4 py-3 text-sm text-green-300">
+            Password changed successfully. Please sign in with your new password.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

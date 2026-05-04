@@ -1,13 +1,28 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
+const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
+
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isAuthRoute = req.nextUrl.pathname.startsWith("/api/auth");
-  const isLoginPage = req.nextUrl.pathname === "/login";
+  const { pathname } = req.nextUrl;
+
+  const isAuthRoute = pathname.startsWith("/api/auth");
+  const isLoginPage = pathname === "/login";
+  const isPasswordPage = pathname === "/account/password";
+  const isPasswordApi = pathname === "/api/account/password";
 
   if (isAuthRoute || isLoginPage) return NextResponse.next();
   if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.nextUrl));
+
+  if (!isPasswordPage && !isPasswordApi) {
+    const changedAt = req.auth?.user?.passwordChangedAt;
+    const expired =
+      !changedAt || Date.now() - new Date(changedAt).getTime() > SIX_MONTHS_MS;
+    if (expired) {
+      return NextResponse.redirect(new URL("/account/password?required=1", req.nextUrl));
+    }
+  }
 
   return NextResponse.next();
 });
