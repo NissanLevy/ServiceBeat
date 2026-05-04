@@ -4,6 +4,7 @@ import Link from "next/link";
 import DeleteButton from "./DeleteButton";
 import AutoRefresh from "@/components/AutoRefresh";
 import AlertsManager from "@/components/AlertsManager";
+import UptimeChart from "@/components/UptimeChart";
 
 export const revalidate = 0;
 
@@ -12,7 +13,7 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
   const monitor = await prisma.monitor.findUnique({
     where: { id },
     include: {
-      results: { orderBy: { timestamp: "desc" }, take: 50 },
+      results: { orderBy: { timestamp: "desc" }, take: 100 },
       alertRules: true,
     },
   });
@@ -47,6 +48,13 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
           </Link>
           <DeleteButton monitorId={monitor.id} />
         </div>
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-lg px-5 py-5 mb-6">
+        <UptimeChart results={monitor.results.map(r => ({
+          ...r,
+          timestamp: r.timestamp.toISOString(),
+        }))} />
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
