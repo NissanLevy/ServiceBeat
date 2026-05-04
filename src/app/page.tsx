@@ -69,9 +69,9 @@ export default async function DashboardPage() {
   );
 }
 
-function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: string; interval: number; results: { passed: boolean }[] } }) {
+function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: string; interval: number; active: boolean; results: { passed: boolean }[] } }) {
   const last = monitor.results[0];
-  const status = !last ? "pending" : last.passed ? "up" : "down";
+  const status = !monitor.active ? "paused" : !last ? "pending" : last.passed ? "up" : "down";
 
   return (
     <Link
@@ -79,7 +79,7 @@ function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: str
       className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg px-5 py-4 hover:border-gray-600 transition-colors"
     >
       <div>
-        <p className="font-medium text-white">{monitor.name}</p>
+        <p className={`font-medium ${monitor.active ? "text-white" : "text-gray-500"}`}>{monitor.name}</p>
         <p className="text-sm text-gray-400 mt-0.5">{monitor.url}</p>
       </div>
       <div className="flex items-center gap-4">
@@ -90,10 +90,11 @@ function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: str
   );
 }
 
-function StatusBadge({ status }: { status: "up" | "down" | "pending" }) {
+function StatusBadge({ status }: { status: "up" | "down" | "pending" | "paused" }) {
   const styles = {
     up: "bg-green-500/10 text-green-400 border-green-500/20",
     down: "bg-red-500/10 text-red-400 border-red-500/20",
+    paused: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     pending: "bg-gray-500/10 text-gray-400 border-gray-500/20",
   };
   return (

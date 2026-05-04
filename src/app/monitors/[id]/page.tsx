@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import DeleteButton from "./DeleteButton";
+import PauseButton from "./PauseButton";
 import AutoRefresh from "@/components/AutoRefresh";
 import AlertsManager from "@/components/AlertsManager";
 import UptimeChart from "@/components/UptimeChart";
@@ -40,6 +41,7 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
           <p className="text-gray-400 text-sm mt-0.5">{monitor.url}</p>
         </div>
         <div className="flex items-center gap-3">
+          <PauseButton monitorId={monitor.id} active={monitor.active} />
           <Link
             href={`/monitors/${monitor.id}/edit`}
             className="text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-md transition-colors"

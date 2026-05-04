@@ -19,14 +19,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const monitor = await prisma.monitor.update({
     where: { id },
     data: {
-      name: body.name,
-      url: body.url,
-      method: body.method,
-      headers: body.headers,
-      body: body.body,
-      interval: body.interval,
-      assertions: body.assertions,
-      active: body.active,
+      ...(body.name       !== undefined && { name: body.name }),
+      ...(body.url        !== undefined && { url: body.url }),
+      ...(body.method     !== undefined && { method: body.method }),
+      ...(body.headers    !== undefined && { headers: body.headers }),
+      ...(body.body       !== undefined && { body: body.body }),
+      ...(body.interval   !== undefined && { interval: body.interval }),
+      ...(body.assertions !== undefined && { assertions: body.assertions }),
+      ...(body.serviceId  !== undefined && { serviceId: body.serviceId }),
+      ...(body.active     !== undefined && { active: body.active }),
     },
   });
 
