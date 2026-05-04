@@ -13,7 +13,7 @@ function compare(operator: string, actual: unknown, expected: unknown): boolean 
   }
 }
 
-function evaluate(assertion: Assertion, statusCode: number, body: string, parsed: unknown): string | null {
+function evaluate(assertion: Assertion, statusCode: number, body: string, parsed: unknown, responseTime: number): string | null {
   if (assertion.type === "status_code") {
     if (!compare(assertion.operator, statusCode, assertion.value))
       return `Status code ${statusCode} failed: expected ${assertion.operator} ${assertion.value}`;
@@ -36,6 +36,12 @@ function evaluate(assertion: Assertion, statusCode: number, body: string, parsed
     const actual = results[0];
     if (!compare(assertion.operator, actual, assertion.value))
       return `JSONPath "${assertion.path}" = ${JSON.stringify(actual)} failed: expected ${assertion.operator} ${JSON.stringify(assertion.value)}`;
+    return null;
+  }
+
+  if (assertion.type === "response_time") {
+    if (!compare(assertion.operator, responseTime, assertion.value))
+      return `Response time ${responseTime}ms failed: expected ${assertion.operator === "gt" ? "less than" : "greater than"} ${assertion.value}ms`;
     return null;
   }
 
@@ -64,7 +70,7 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
     })();
 
     const failures = input.assertions
-      .map((a) => evaluate(a, response.status, body, parsed))
+      .map((a) => evaluate(a, response.status, body, parsed, responseTime))
       .filter((f): f is string => f !== null);
 
     if (failures.length > 0) {

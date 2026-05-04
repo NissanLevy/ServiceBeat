@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       interval: body.interval ?? 60,
       assertions: body.assertions ?? [{ type: "status_code", operator: "eq", value: 200 }],
       serviceId: body.serviceId ?? null,
+      showOnStatusPage: body.showOnStatusPage ?? true,
       active: true,
     },
   });

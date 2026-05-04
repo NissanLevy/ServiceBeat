@@ -23,6 +23,7 @@ export default function NewMonitorPage() {
     interval: 60,
     alertEmail: "",
     serviceId: "",
+    showOnStatusPage: true,
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function NewMonitorPage() {
           method: form.method,
           interval: form.interval,
           serviceId: form.serviceId || null,
+          showOnStatusPage: form.showOnStatusPage,
           assertions,
         }),
       });
@@ -186,6 +188,16 @@ export default function NewMonitorPage() {
             className={inputCls}
           />
         </Field>
+
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={form.showOnStatusPage}
+            onChange={(e) => setForm({ ...form, showOnStatusPage: e.target.checked })}
+            className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-0"
+          />
+          <span className="text-sm text-gray-300">Show on public status page</span>
+        </label>
 
         <div className="flex gap-3 pt-2">
           <button

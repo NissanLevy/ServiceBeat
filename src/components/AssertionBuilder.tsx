@@ -10,6 +10,7 @@ interface Props {
 const STATUS_CODE_OPS: AssertionOperator[] = ["eq", "neq", "gt", "lt"];
 const KEYWORD_OPS = ["contains", "neq"] as const;
 const JSONPATH_OPS: AssertionOperator[] = ["eq", "neq", "contains", "gt", "lt"];
+const RESPONSE_TIME_OPS = ["gt", "lt"] as const;
 
 const OP_LABELS: Record<string, string> = {
   eq: "equals",
@@ -20,8 +21,9 @@ const OP_LABELS: Record<string, string> = {
 };
 
 function defaultAssertion(type: Assertion["type"]): Assertion {
-  if (type === "status_code") return { type, operator: "eq", value: 200 };
-  if (type === "keyword")     return { type, operator: "contains", value: "" };
+  if (type === "status_code")   return { type, operator: "eq", value: 200 };
+  if (type === "keyword")       return { type, operator: "contains", value: "" };
+  if (type === "response_time") return { type, operator: "lt", value: 3000 };
   return { type: "jsonpath", path: "$.status", operator: "eq", value: "" };
 }
 
@@ -57,6 +59,7 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
             <option value="status_code">Status Code</option>
             <option value="keyword">Keyword</option>
             <option value="jsonpath">JSONPath</option>
+            <option value="response_time">Response Time (ms)</option>
           </select>
 
           {/* JSONPath path input */}
@@ -77,6 +80,7 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
           >
             {(assertion.type === "status_code" ? STATUS_CODE_OPS
               : assertion.type === "keyword" ? KEYWORD_OPS
+              : assertion.type === "response_time" ? RESPONSE_TIME_OPS
               : JSONPATH_OPS
             ).map((op) => (
               <option key={op} value={op}>{OP_LABELS[op]}</option>
@@ -88,12 +92,12 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
             value={String(assertion.value)}
             onChange={(e) => {
               const raw = e.target.value;
-              const value = assertion.type === "status_code"
+              const value = (assertion.type === "status_code" || assertion.type === "response_time")
                 ? Number(raw)
                 : raw;
               update(i, { value } as Partial<Assertion>);
             }}
-            placeholder={assertion.type === "status_code" ? "200" : assertion.type === "jsonpath" ? "active" : "keyword"}
+            placeholder={assertion.type === "status_code" ? "200" : assertion.type === "response_time" ? "3000" : assertion.type === "jsonpath" ? "active" : "keyword"}
             className={`${inputCls} flex-1`}
           />
 
