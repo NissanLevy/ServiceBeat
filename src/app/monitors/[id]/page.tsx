@@ -22,7 +22,7 @@ function formatDuration(ms: number): string {
 
 export default async function MonitorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [monitor, incidents] = await Promise.all([
+  const [monitor, incidents, alertEvents] = await Promise.all([
     prisma.monitor.findUnique({
       where: { id },
       include: {
@@ -34,6 +34,12 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
       where: { monitorId: id },
       orderBy: { startedAt: "desc" },
       take: 20,
+    }),
+    prisma.alertEvent.findMany({
+      where: { monitorId: id },
+      orderBy: { sentAt: "desc" },
+      take: 30,
+      include: { rule: { select: { channel: true, config: true } } },
     }),
   ]);
 
@@ -112,6 +118,43 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
           monitorId={monitor.id}
           initialRules={monitor.alertRules as { id: string; channel: string; config: Record<string, string> }[]}
         />
+      </div>
+
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        Notification History
+      </h2>
+      <div className="mb-8 space-y-2">
+        {alertEvents.length === 0 && (
+          <p className="text-gray-500 text-sm">No notifications sent yet.</p>
+        )}
+        {alertEvents.map((event) => {
+          const config = event.rule.config as Record<string, string>;
+          const destination =
+            event.rule.channel === "email" ? config.to
+            : event.rule.channel === "pagerduty" ? `${config.integrationKey?.slice(0, 8)}…`
+            : config.url ? new URL(config.url).hostname
+            : "—";
+          return (
+            <div key={event.id} className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-md px-4 py-3 text-sm">
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded border ${
+                  event.type === "triggered"
+                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                    : "bg-green-500/10 text-green-400 border-green-500/20"
+                }`}>
+                  {event.type}
+                </span>
+                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded capitalize">
+                  {event.rule.channel}
+                </span>
+                <span className="text-gray-400 text-xs truncate max-w-xs">{destination}</span>
+              </div>
+              <span className="text-gray-500 text-xs">
+                {event.sentAt.toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })} UTC
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
