@@ -18,7 +18,7 @@ export default async function StatusPage() {
 
   const [monitors, services] = await Promise.all([
     prisma.monitor.findMany({
-      where: { active: true },
+      where: { active: true, showOnStatusPage: true },
       orderBy: { name: "asc" },
       include: {
         results: { orderBy: { timestamp: "desc" }, take: 1 },

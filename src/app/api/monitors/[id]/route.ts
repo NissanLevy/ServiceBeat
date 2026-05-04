@@ -27,7 +27,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(body.interval   !== undefined && { interval: body.interval }),
       ...(body.assertions !== undefined && { assertions: body.assertions }),
       ...(body.serviceId  !== undefined && { serviceId: body.serviceId }),
-      ...(body.active     !== undefined && { active: body.active }),
+      ...(body.active            !== undefined && { active: body.active }),
+      ...(body.showOnStatusPage  !== undefined && { showOnStatusPage: body.showOnStatusPage }),
     },
   });
 
