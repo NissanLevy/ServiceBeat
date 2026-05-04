@@ -19,16 +19,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/" className="text-lg font-semibold tracking-tight text-white">
               ServiceBeat
             </a>
-            <a href="/services" className="text-sm text-gray-400 hover:text-white">
-              Services
-            </a>
-            <a href="/status" className="text-sm text-gray-400 hover:text-white">
-              Status
-            </a>
-            {session?.user?.role === "admin" && (
-              <a href="/admin/users" className="text-sm text-gray-400 hover:text-white">
-                Admin
-              </a>
+            {session?.user && (
+              <>
+                <a href="/services" className="text-sm text-gray-400 hover:text-white">
+                  Services
+                </a>
+                <a href="/status" className="text-sm text-gray-400 hover:text-white">
+                  Status
+                </a>
+                {session.user.role === "admin" && (
+                  <a href="/admin/users" className="text-sm text-gray-400 hover:text-white">
+                    Admin
+                  </a>
+                )}
+              </>
             )}
           </div>
           {session?.user && (
