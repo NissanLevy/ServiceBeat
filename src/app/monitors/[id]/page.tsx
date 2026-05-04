@@ -9,17 +9,38 @@ import UptimeChart from "@/components/UptimeChart";
 
 export const revalidate = 0;
 
+function formatDuration(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
 export default async function MonitorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const monitor = await prisma.monitor.findUnique({
-    where: { id },
-    include: {
-      results: { orderBy: { timestamp: "desc" }, take: 100 },
-      alertRules: true,
-    },
-  });
+  const [monitor, incidents] = await Promise.all([
+    prisma.monitor.findUnique({
+      where: { id },
+      include: {
+        results: { orderBy: { timestamp: "desc" }, take: 100 },
+        alertRules: true,
+      },
+    }),
+    prisma.incident.findMany({
+      where: { monitorId: id },
+      orderBy: { startedAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   if (!monitor) notFound();
+
+  const openIncident = incidents.find((i) => !i.resolvedAt) ?? null;
+  const pastIncidents = incidents.filter((i) => i.resolvedAt);
 
   const upCount = monitor.results.filter((r) => r.passed).length;
   const total = monitor.results.length;
@@ -28,6 +49,8 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
     total > 0
       ? Math.round(monitor.results.reduce((s, r) => s + r.responseTime, 0) / total)
       : null;
+
+  const now = Date.now();
 
   return (
     <div>
@@ -52,6 +75,22 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
+      {openIncident && (
+        <div className="bg-red-950/40 border border-red-800/60 rounded-lg px-5 py-4 mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-red-400 font-semibold text-sm">Incident active</span>
+            <span className="text-red-500 text-sm">— down for {formatDuration(now - openIncident.startedAt.getTime())}</span>
+          </div>
+          <p className="text-xs text-red-500/80">
+            Started {openIncident.startedAt.toLocaleString("en-US", { timeZone: "UTC" })} UTC
+          </p>
+          {openIncident.failureReason && (
+            <p className="text-xs text-red-400 mt-1">{openIncident.failureReason.split("\n")[0]}</p>
+          )}
+        </div>
+      )}
+
       <div className="bg-gray-900 border border-gray-800 rounded-lg px-5 py-5 mb-6">
         <UptimeChart results={monitor.results.map(r => ({
           ...r,
@@ -60,7 +99,7 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <StatCard label="Uptime (last 50)" value={`${uptime}%`} />
+        <StatCard label="Uptime (last 100)" value={`${uptime}%`} />
         <StatCard label="Avg Response" value={avgResponse ? `${avgResponse}ms` : "—"} />
         <StatCard label="Interval" value={`${monitor.interval}s`} />
       </div>
@@ -76,34 +115,72 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        Incident History
+      </h2>
+      <div className="mb-8 space-y-2">
+        {incidents.length === 0 && (
+          <p className="text-gray-500 text-sm">No incidents recorded yet.</p>
+        )}
+        {incidents.map((inc) => {
+          const duration = inc.resolvedAt
+            ? formatDuration(inc.resolvedAt.getTime() - inc.startedAt.getTime())
+            : formatDuration(now - inc.startedAt.getTime());
+          return (
+            <div
+              key={inc.id}
+              className={`bg-gray-900 border rounded-md px-4 py-3 text-sm ${!inc.resolvedAt ? "border-red-900/50" : "border-gray-800"}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${inc.resolvedAt ? "bg-green-500" : "bg-red-500"}`} />
+                  <span className="text-gray-300">
+                    {inc.startedAt.toLocaleString("en-US", { timeZone: "UTC" })} UTC
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-400 text-xs">
+                  <span>{duration}</span>
+                  <span className={inc.resolvedAt ? "text-green-500" : "text-red-400"}>
+                    {inc.resolvedAt ? "resolved" : "ongoing"}
+                  </span>
+                </div>
+              </div>
+              {inc.failureReason && (
+                <p className="text-xs text-red-400 mt-1.5 pl-5">{inc.failureReason.split("\n")[0]}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
         Recent Checks
       </h2>
       <div className="space-y-2">
         {monitor.results.map((r) => {
           const failures = r.failureReason ? r.failureReason.split("\n") : [];
           return (
-          <div
-            key={r.id}
-            className={`bg-gray-900 border rounded-md px-4 py-3 text-sm ${!r.passed ? "border-red-900/50" : "border-gray-800"}`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className={`w-2 h-2 rounded-full ${r.passed ? "bg-green-500" : "bg-red-500"}`} />
-                <span className="text-gray-300">{new Date(r.timestamp).toLocaleString()}</span>
+            <div
+              key={r.id}
+              className={`bg-gray-900 border rounded-md px-4 py-3 text-sm ${!r.passed ? "border-red-900/50" : "border-gray-800"}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${r.passed ? "bg-green-500" : "bg-red-500"}`} />
+                  <span className="text-gray-300">{new Date(r.timestamp).toLocaleString("en-US", { timeZone: "UTC" })} UTC</span>
+                </div>
+                <div className="flex items-center gap-4 text-gray-400">
+                  {r.statusCode && <span>HTTP {r.statusCode}</span>}
+                  <span>{r.responseTime}ms</span>
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-gray-400">
-                {r.statusCode && <span>HTTP {r.statusCode}</span>}
-                <span>{r.responseTime}ms</span>
-              </div>
+              {failures.length > 0 && (
+                <div className="mt-2 pl-5 space-y-0.5">
+                  {failures.map((f, i) => (
+                    <p key={i} className="text-red-400 text-xs">{f}</p>
+                  ))}
+                </div>
+              )}
             </div>
-            {failures.length > 0 && (
-              <div className="mt-2 pl-5 space-y-0.5">
-                {failures.map((f, i) => (
-                  <p key={i} className="text-red-400 text-xs">{f}</p>
-                ))}
-              </div>
-            )}
-          </div>
           );
         })}
         {monitor.results.length === 0 && (

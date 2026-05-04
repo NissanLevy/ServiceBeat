@@ -39,6 +39,16 @@ model Monitor {
   updatedAt  DateTime      @updatedAt
   results    CheckResult[]
   alertRules AlertRule[]
+  incidents  Incident[]
+}
+
+model Incident {
+  id            String    @id @default(cuid())
+  monitorId     String
+  monitor       Monitor   @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  startedAt     DateTime  @default(now())
+  resolvedAt    DateTime?
+  failureReason String?
 }
 
 model CheckResult {

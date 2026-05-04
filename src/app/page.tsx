@@ -4,13 +4,27 @@ import AutoRefresh from "@/components/AutoRefresh";
 
 export const revalidate = 0;
 
+function formatDuration(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
 export default async function DashboardPage() {
+  const now = Date.now();
+
   const [monitors, services] = await Promise.all([
     prisma.monitor.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         results: { orderBy: { timestamp: "desc" }, take: 1 },
         service: true,
+        incidents: { where: { resolvedAt: null }, take: 1 },
       },
     }),
     prisma.service.findMany({ orderBy: { name: "asc" } }),
@@ -47,7 +61,7 @@ export default async function DashboardPage() {
               {service.name}
             </h2>
             <div className="space-y-2">
-              {sMonitors.map((m) => <MonitorRow key={m.id} monitor={m} />)}
+              {sMonitors.map((m) => <MonitorRow key={m.id} monitor={m} now={now} />)}
             </div>
           </div>
         ))}
@@ -60,7 +74,7 @@ export default async function DashboardPage() {
               </h2>
             )}
             <div className="space-y-2">
-              {ungrouped.map((m) => <MonitorRow key={m.id} monitor={m} />)}
+              {ungrouped.map((m) => <MonitorRow key={m.id} monitor={m} now={now} />)}
             </div>
           </div>
         )}
@@ -69,9 +83,23 @@ export default async function DashboardPage() {
   );
 }
 
-function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: string; interval: number; active: boolean; results: { passed: boolean }[] } }) {
+type MonitorRowProps = {
+  monitor: {
+    id: string;
+    name: string;
+    url: string;
+    interval: number;
+    active: boolean;
+    results: { passed: boolean }[];
+    incidents: { startedAt: Date }[];
+  };
+  now: number;
+};
+
+function MonitorRow({ monitor, now }: MonitorRowProps) {
   const last = monitor.results[0];
   const status = !monitor.active ? "paused" : !last ? "pending" : last.passed ? "up" : "down";
+  const openIncident = monitor.incidents[0] ?? null;
 
   return (
     <Link
@@ -83,6 +111,11 @@ function MonitorRow({ monitor }: { monitor: { id: string; name: string; url: str
         <p className="text-sm text-gray-400 mt-0.5">{monitor.url}</p>
       </div>
       <div className="flex items-center gap-4">
+        {openIncident && (
+          <span className="text-xs text-red-500">
+            down {formatDuration(now - openIncident.startedAt.getTime())}
+          </span>
+        )}
         <span className="text-xs text-gray-500">every {monitor.interval}s</span>
         <StatusBadge status={status} />
       </div>

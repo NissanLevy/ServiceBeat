@@ -72,6 +72,18 @@ const worker = new Worker(
         result.failureReason
       );
     }
+
+    if (!result.passed) {
+      const open = await prisma.incident.findFirst({ where: { monitorId, resolvedAt: null } });
+      if (!open) {
+        await prisma.incident.create({ data: { monitorId, failureReason: result.failureReason } });
+      }
+    } else {
+      await prisma.incident.updateMany({
+        where: { monitorId, resolvedAt: null },
+        data: { resolvedAt: new Date() },
+      });
+    }
   },
   { connection, concurrency: 10 }
 );
