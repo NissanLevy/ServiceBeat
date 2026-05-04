@@ -55,7 +55,7 @@ services:
       redis:
         condition: service_healthy
     command: >
-      sh -c "npx prisma migrate deploy && npm start"
+      sh -c "npx prisma migrate deploy && npx tsx src/scripts/seed.ts && npm start"
 
   worker:
     build:

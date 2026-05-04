@@ -63,7 +63,7 @@ npm run docker:up
 
 This builds and starts 5 containers: `web`, `worker`, `postgres`, `redis`, and `pgadmin`.
 
-The web app runs migrations and seeds the admin user automatically on startup.
+On first startup the web container runs migrations and creates the admin user from `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Subsequent restarts skip user creation if the account already exists.
 
 ### 3. Open the app
 
