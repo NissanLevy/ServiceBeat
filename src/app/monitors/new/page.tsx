@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AssertionBuilder from "@/components/AssertionBuilder";
+import HeadersEditor, { type Header } from "@/components/HeadersEditor";
 import type { Assertion } from "@/lib/checker/types";
 
 interface Service { id: string; name: string; }
+
+const BODY_METHODS = ["POST", "PUT", "PATCH"];
 
 export default function NewMonitorPage() {
   const router = useRouter();
@@ -16,14 +19,17 @@ export default function NewMonitorPage() {
   const [assertions, setAssertions] = useState<Assertion[]>([
     { type: "status_code", operator: "eq", value: 200 },
   ]);
+  const [headers, setHeaders] = useState<Header[]>([]);
   const [form, setForm] = useState({
     name: "",
     url: "",
     method: "GET",
     interval: 60,
+    failureThreshold: 1,
     alertEmail: "",
     serviceId: "",
     showOnStatusPage: true,
+    body: "",
   });
 
   useEffect(() => {
@@ -48,6 +54,9 @@ export default function NewMonitorPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const headersObj = Object.fromEntries(
+        headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value])
+      );
       const res = await fetch("/api/monitors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,8 +65,11 @@ export default function NewMonitorPage() {
           url: form.url,
           method: form.method,
           interval: form.interval,
+          failureThreshold: form.failureThreshold,
           serviceId: form.serviceId || null,
           showOnStatusPage: form.showOnStatusPage,
+          headers: headersObj,
+          body: BODY_METHODS.includes(form.method) && form.body.trim() ? form.body : null,
           assertions,
         }),
       });
@@ -95,11 +107,7 @@ export default function NewMonitorPage() {
               ))}
             </select>
             {!showNewService ? (
-              <button
-                type="button"
-                onClick={() => setShowNewService(true)}
-                className="text-xs text-blue-400 hover:text-blue-300"
-              >
+              <button type="button" onClick={() => setShowNewService(true)} className="text-xs text-blue-400 hover:text-blue-300">
                 + Create new service
               </button>
             ) : (
@@ -112,108 +120,77 @@ export default function NewMonitorPage() {
                   placeholder="Service name"
                   className={`${inputCls} flex-1`}
                 />
-                <button
-                  type="button"
-                  onClick={createService}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-md text-sm"
-                >
-                  Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowNewService(false)}
-                  className="text-gray-400 hover:text-white px-2 py-2 text-sm"
-                >
-                  ✕
-                </button>
+                <button type="button" onClick={createService} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-md text-sm">Add</button>
+                <button type="button" onClick={() => setShowNewService(false)} className="text-gray-400 hover:text-white px-2 py-2 text-sm">✕</button>
               </div>
             )}
           </div>
         </Field>
 
         <Field label="Name">
-          <input
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="My API"
-            className={inputCls}
-          />
+          <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My API" className={inputCls} />
         </Field>
 
         <Field label="URL">
-          <input
-            required
-            type="url"
-            value={form.url}
-            onChange={(e) => setForm({ ...form, url: e.target.value })}
-            placeholder="https://api.example.com/health"
-            className={inputCls}
-          />
+          <input required type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://api.example.com/health" className={inputCls} />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
           <Field label="Method">
-            <select
-              value={form.method}
-              onChange={(e) => setForm({ ...form, method: e.target.value })}
-              className={inputCls}
-            >
-              {["GET", "POST", "PUT", "DELETE", "HEAD"].map((m) => (
-                <option key={m}>{m}</option>
-              ))}
+            <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })} className={inputCls}>
+              {["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"].map((m) => <option key={m}>{m}</option>)}
             </select>
           </Field>
           <Field label="Interval (seconds)">
-            <input
-              type="number"
-              min={10}
-              value={form.interval}
-              onChange={(e) => setForm({ ...form, interval: Number(e.target.value) })}
-              className={inputCls}
-            />
+            <input type="number" min={10} value={form.interval} onChange={(e) => setForm({ ...form, interval: Number(e.target.value) })} className={inputCls} />
           </Field>
         </div>
+
+        <Field label="Request Headers (optional)">
+          <HeadersEditor headers={headers} onChange={setHeaders} />
+        </Field>
+
+        {BODY_METHODS.includes(form.method) && (
+          <Field label="Request Body (optional)">
+            <textarea
+              value={form.body}
+              onChange={(e) => setForm({ ...form, body: e.target.value })}
+              placeholder='{"key": "value"}'
+              rows={3}
+              className={`${inputCls} font-mono`}
+            />
+          </Field>
+        )}
 
         <Field label="Assertions">
           <AssertionBuilder assertions={assertions} onChange={setAssertions} />
         </Field>
 
-        <Field label="Alert Email (optional)">
+        <Field label="Alert after N consecutive failures">
           <input
-            type="email"
-            value={form.alertEmail}
-            onChange={(e) => setForm({ ...form, alertEmail: e.target.value })}
-            placeholder="you@example.com"
+            type="number"
+            min={1}
+            max={10}
+            value={form.failureThreshold}
+            onChange={(e) => setForm({ ...form, failureThreshold: Number(e.target.value) })}
             className={inputCls}
           />
         </Field>
 
+        <Field label="Alert Email (optional)">
+          <input type="email" value={form.alertEmail} onChange={(e) => setForm({ ...form, alertEmail: e.target.value })} placeholder="you@example.com" className={inputCls} />
+        </Field>
+
         <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={form.showOnStatusPage}
-            onChange={(e) => setForm({ ...form, showOnStatusPage: e.target.checked })}
-            className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-0"
-          />
+          <input type="checkbox" checked={form.showOnStatusPage} onChange={(e) => setForm({ ...form, showOnStatusPage: e.target.checked })} className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-0" />
           <span className="text-sm text-gray-300">Show on public status page</span>
         </label>
 
         <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-5 py-2 rounded-md text-sm font-medium"
-          >
+          <button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-5 py-2 rounded-md text-sm font-medium">
             {saving ? "Saving..." : "Create Monitor"}
           </button>
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="text-gray-400 hover:text-white px-4 py-2 rounded-md text-sm"
-          >
-            Cancel
-          </button>
+          <button type="button" onClick={() => router.push("/")} className="text-gray-400 hover:text-white px-4 py-2 rounded-md text-sm">Cancel</button>
         </div>
       </form>
     </div>
@@ -229,5 +206,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const inputCls =
-  "w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500";
+const inputCls = "w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500";

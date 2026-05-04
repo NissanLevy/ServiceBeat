@@ -34,6 +34,7 @@ model Monitor {
   assertions Json          @default("[]")
   active            Boolean       @default(true)
   showOnStatusPage  Boolean       @default(true)
+  failureThreshold  Int           @default(1)
   serviceId  String?
   service    Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   createdAt  DateTime      @default(now())

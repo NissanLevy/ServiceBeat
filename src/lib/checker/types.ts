@@ -4,7 +4,8 @@ export type Assertion =
   | { type: "status_code";   operator: AssertionOperator;    value: number }
   | { type: "keyword";       operator: "contains" | "neq";  value: string }
   | { type: "jsonpath";      path: string; operator: AssertionOperator; value: unknown }
-  | { type: "response_time"; operator: "gt" | "lt";          value: number };
+  | { type: "response_time"; operator: "gt" | "lt";          value: number }
+  | { type: "ssl_expiry";    value: number };
 
 export interface CheckInput {
   url: string;

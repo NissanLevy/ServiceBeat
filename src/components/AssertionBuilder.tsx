@@ -24,6 +24,7 @@ function defaultAssertion(type: Assertion["type"]): Assertion {
   if (type === "status_code")   return { type, operator: "eq", value: 200 };
   if (type === "keyword")       return { type, operator: "contains", value: "" };
   if (type === "response_time") return { type, operator: "lt", value: 3000 };
+  if (type === "ssl_expiry")    return { type, value: 14 };
   return { type: "jsonpath", path: "$.status", operator: "eq", value: "" };
 }
 
@@ -34,23 +35,17 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
   }
 
   function changeType(index: number, type: Assertion["type"]) {
-    const next = assertions.map((a, i) => i === index ? defaultAssertion(type) : a);
-    onChange(next);
+    onChange(assertions.map((a, i) => i === index ? defaultAssertion(type) : a));
   }
 
   function remove(index: number) {
     onChange(assertions.filter((_, i) => i !== index));
   }
 
-  function add() {
-    onChange([...assertions, defaultAssertion("status_code")]);
-  }
-
   return (
     <div className="space-y-3">
       {assertions.map((assertion, i) => (
         <div key={i} className="flex gap-2 items-start">
-          {/* Type */}
           <select
             value={assertion.type}
             onChange={(e) => changeType(i, e.target.value as Assertion["type"])}
@@ -60,9 +55,9 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
             <option value="keyword">Keyword</option>
             <option value="jsonpath">JSONPath</option>
             <option value="response_time">Response Time (ms)</option>
+            <option value="ssl_expiry">SSL Expiry (days)</option>
           </select>
 
-          {/* JSONPath path input */}
           {assertion.type === "jsonpath" && (
             <input
               value={assertion.path}
@@ -72,34 +67,45 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
             />
           )}
 
-          {/* Operator */}
-          <select
-            value={assertion.operator}
-            onChange={(e) => update(i, { operator: e.target.value as AssertionOperator })}
-            className={selectCls}
-          >
-            {(assertion.type === "status_code" ? STATUS_CODE_OPS
-              : assertion.type === "keyword" ? KEYWORD_OPS
-              : assertion.type === "response_time" ? RESPONSE_TIME_OPS
-              : JSONPATH_OPS
-            ).map((op) => (
-              <option key={op} value={op}>{OP_LABELS[op]}</option>
-            ))}
-          </select>
+          {assertion.type !== "ssl_expiry" && (
+            <select
+              value={"operator" in assertion ? String(assertion.operator) : ""}
+              onChange={(e) => update(i, { operator: e.target.value as AssertionOperator })}
+              className={selectCls}
+            >
+              {(assertion.type === "status_code" ? STATUS_CODE_OPS
+                : assertion.type === "keyword" ? KEYWORD_OPS
+                : assertion.type === "response_time" ? RESPONSE_TIME_OPS
+                : JSONPATH_OPS
+              ).map((op) => (
+                <option key={op} value={op}>{OP_LABELS[op]}</option>
+              ))}
+            </select>
+          )}
 
-          {/* Value */}
-          <input
-            value={String(assertion.value)}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const value = (assertion.type === "status_code" || assertion.type === "response_time")
-                ? Number(raw)
-                : raw;
-              update(i, { value } as Partial<Assertion>);
-            }}
-            placeholder={assertion.type === "status_code" ? "200" : assertion.type === "response_time" ? "3000" : assertion.type === "jsonpath" ? "active" : "keyword"}
-            className={`${inputCls} flex-1`}
-          />
+          <div className="flex items-center gap-1 flex-1">
+            {assertion.type === "ssl_expiry" && (
+              <span className="text-xs text-gray-500 whitespace-nowrap">min days remaining</span>
+            )}
+            <input
+              value={String(assertion.value)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                const value = (assertion.type === "status_code" || assertion.type === "response_time" || assertion.type === "ssl_expiry")
+                  ? Number(raw)
+                  : raw;
+                update(i, { value } as Partial<Assertion>);
+              }}
+              placeholder={
+                assertion.type === "status_code" ? "200"
+                : assertion.type === "response_time" ? "3000"
+                : assertion.type === "ssl_expiry" ? "14"
+                : assertion.type === "jsonpath" ? "active"
+                : "keyword"
+              }
+              className={`${inputCls} flex-1`}
+            />
+          </div>
 
           <button
             type="button"
@@ -114,7 +120,7 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
 
       <button
         type="button"
-        onClick={add}
+        onClick={() => onChange([...assertions, defaultAssertion("status_code")])}
         className="text-xs text-blue-400 hover:text-blue-300"
       >
         + Add assertion

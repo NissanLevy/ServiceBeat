@@ -1,19 +1,53 @@
 import axios from "axios";
+import https from "https";
+import tls from "tls";
 import { JSONPath } from "jsonpath-plus";
 import type { Assertion, CheckInput, CheckOutput } from "./types";
 
 function compare(operator: string, actual: unknown, expected: unknown): boolean {
   switch (operator) {
-    case "eq":      return actual == expected;
-    case "neq":     return actual != expected;
+    case "eq":       return actual == expected;
+    case "neq":      return actual != expected;
     case "contains": return String(actual).includes(String(expected));
-    case "gt":      return Number(actual) > Number(expected);
-    case "lt":      return Number(actual) < Number(expected);
-    default:        return false;
+    case "gt":       return Number(actual) > Number(expected);
+    case "lt":       return Number(actual) < Number(expected);
+    default:         return false;
   }
 }
 
-function evaluate(assertion: Assertion, statusCode: number, body: string, parsed: unknown, responseTime: number): string | null {
+function getSslDaysRemaining(url: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "https:") return resolve(null);
+      const req = https.request(
+        { host: parsed.hostname, port: Number(parsed.port) || 443, method: "HEAD", rejectUnauthorized: false },
+        (res) => {
+          const cert = (res.socket as tls.TLSSocket).getPeerCertificate();
+          req.destroy();
+          if (cert?.valid_to) {
+            resolve(Math.floor((new Date(cert.valid_to).getTime() - Date.now()) / 86_400_000));
+          } else {
+            resolve(null);
+          }
+        }
+      );
+      req.on("error", () => resolve(null));
+      req.end();
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function evaluate(
+  assertion: Assertion,
+  statusCode: number,
+  body: string,
+  parsed: unknown,
+  responseTime: number,
+  sslDaysRemaining: number | null
+): string | null {
   if (assertion.type === "status_code") {
     if (!compare(assertion.operator, statusCode, assertion.value))
       return `Status code ${statusCode} failed: expected ${assertion.operator} ${assertion.value}`;
@@ -45,6 +79,14 @@ function evaluate(assertion: Assertion, statusCode: number, body: string, parsed
     return null;
   }
 
+  if (assertion.type === "ssl_expiry") {
+    if (sslDaysRemaining === null) return `Could not retrieve SSL certificate`;
+    if (sslDaysRemaining < 0) return `SSL certificate has expired`;
+    if (sslDaysRemaining < assertion.value)
+      return `SSL certificate expires in ${sslDaysRemaining} day(s) (threshold: ${assertion.value} days)`;
+    return null;
+  }
+
   return null;
 }
 
@@ -52,14 +94,19 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
   const start = Date.now();
 
   try {
-    const response = await axios.request({
-      url: input.url,
-      method: input.method,
-      headers: input.headers ?? {},
-      data: input.body,
-      validateStatus: () => true,
-      timeout: 10000,
-    });
+    const [response, sslDaysRemaining] = await Promise.all([
+      axios.request({
+        url: input.url,
+        method: input.method,
+        headers: input.headers ?? {},
+        data: input.body,
+        validateStatus: () => true,
+        timeout: 10000,
+      }),
+      input.assertions.some((a) => a.type === "ssl_expiry")
+        ? getSslDaysRemaining(input.url)
+        : Promise.resolve(null),
+    ]);
 
     const responseTime = Date.now() - start;
     const body = typeof response.data === "string"
@@ -70,16 +117,11 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
     })();
 
     const failures = input.assertions
-      .map((a) => evaluate(a, response.status, body, parsed, responseTime))
+      .map((a) => evaluate(a, response.status, body, parsed, responseTime, sslDaysRemaining))
       .filter((f): f is string => f !== null);
 
     if (failures.length > 0) {
-      return {
-        passed: false,
-        statusCode: response.status,
-        responseTime,
-        failureReason: failures.join("\n"),
-      };
+      return { passed: false, statusCode: response.status, responseTime, failureReason: failures.join("\n") };
     }
 
     return { passed: true, statusCode: response.status, responseTime, failureReason: null };

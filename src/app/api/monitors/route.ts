@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       assertions: body.assertions ?? [{ type: "status_code", operator: "eq", value: 200 }],
       serviceId: body.serviceId ?? null,
       showOnStatusPage: body.showOnStatusPage ?? true,
+      failureThreshold: body.failureThreshold ?? 1,
       active: true,
     },
   });

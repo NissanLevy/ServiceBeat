@@ -58,31 +58,27 @@ const worker = new Worker(
       },
     });
 
-    const previous = await prisma.checkResult.findFirst({
-      where: { monitorId },
-      orderBy: { timestamp: "desc" },
-      skip: 1,
-    });
-
-    const stateChanged = !previous || previous.passed !== result.passed;
-    if (stateChanged) {
-      await dispatchAlerts(
-        monitorId,
-        result.passed ? "resolved" : "triggered",
-        result.failureReason
-      );
-    }
-
-    if (!result.passed) {
-      const open = await prisma.incident.findFirst({ where: { monitorId, resolvedAt: null } });
-      if (!open) {
-        await prisma.incident.create({ data: { monitorId, failureReason: result.failureReason } });
+    if (result.passed) {
+      const openIncident = await prisma.incident.findFirst({ where: { monitorId, resolvedAt: null } });
+      if (openIncident) {
+        await prisma.incident.updateMany({ where: { monitorId, resolvedAt: null }, data: { resolvedAt: new Date() } });
+        await dispatchAlerts(monitorId, "resolved", null);
       }
     } else {
-      await prisma.incident.updateMany({
-        where: { monitorId, resolvedAt: null },
-        data: { resolvedAt: new Date() },
+      const recentResults = await prisma.checkResult.findMany({
+        where: { monitorId },
+        orderBy: { timestamp: "desc" },
+        take: monitor.failureThreshold,
       });
+      const consecutiveFails = recentResults.every((r) => !r.passed) && recentResults.length === monitor.failureThreshold;
+
+      if (consecutiveFails) {
+        const openIncident = await prisma.incident.findFirst({ where: { monitorId, resolvedAt: null } });
+        if (!openIncident) {
+          await prisma.incident.create({ data: { monitorId, failureReason: result.failureReason } });
+          await dispatchAlerts(monitorId, "triggered", result.failureReason);
+        }
+      }
     }
   },
   { connection, concurrency: 10 }

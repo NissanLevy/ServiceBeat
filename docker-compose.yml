@@ -70,6 +70,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "npx prisma migrate deploy && npx tsx src/scripts/seed.ts && npm start"
+    restart: unless-stopped
 
   worker:
     build:
@@ -81,6 +82,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
