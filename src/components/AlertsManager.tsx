@@ -17,18 +17,21 @@ const CHANNEL_LABELS: Record<string, string> = {
   email: "Email",
   slack: "Slack Webhook",
   webhook: "Webhook",
+  pagerduty: "PagerDuty",
 };
 
 const CHANNEL_PLACEHOLDER: Record<string, string> = {
   email: "you@example.com",
   slack: "https://hooks.slack.com/services/...",
   webhook: "https://your-server.com/webhook",
+  pagerduty: "Integration key (32 hex chars)",
 };
 
 const CHANNEL_FIELD: Record<string, string> = {
   email: "to",
   slack: "url",
   webhook: "url",
+  pagerduty: "integrationKey",
 };
 
 export default function AlertsManager({ monitorId, initialRules }: Props) {
@@ -103,6 +106,7 @@ export default function AlertsManager({ monitorId, initialRules }: Props) {
             <option value="email">Email</option>
             <option value="slack">Slack Webhook</option>
             <option value="webhook">Webhook</option>
+            <option value="pagerduty">PagerDuty</option>
           </select>
           <input
             autoFocus

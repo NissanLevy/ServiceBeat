@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "./email";
 import { sendSlack } from "./slack";
 import { sendWebhook } from "./webhook";
+import { sendPagerDuty } from "./pagerduty";
 
 export async function dispatchAlerts(
   monitorId: string,
@@ -46,6 +47,16 @@ export async function dispatchAlerts(
           reason,
           timestamp: new Date().toISOString(),
         });
+      }
+
+      if (rule.channel === "pagerduty" && config.integrationKey) {
+        await sendPagerDuty(
+          config.integrationKey,
+          type === "triggered" ? "trigger" : "resolve",
+          `${monitorName} is DOWN${reason ? `: ${reason.split("\n")[0]}` : ""}`,
+          monitorUrl,
+          monitorId
+        );
       }
 
       await prisma.alertEvent.create({
