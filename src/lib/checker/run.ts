@@ -41,7 +41,7 @@ function evaluate(assertion: Assertion, statusCode: number, body: string, parsed
 
   if (assertion.type === "response_time") {
     if (!compare(assertion.operator, responseTime, assertion.value))
-      return `Response time ${responseTime}ms failed: expected ${assertion.operator === "gt" ? "less than" : "greater than"} ${assertion.value}ms`;
+      return `Response time ${responseTime}ms failed: expected ${assertion.operator === "lt" ? "less than" : "greater than"} ${assertion.value}ms`;
     return null;
   }
 
