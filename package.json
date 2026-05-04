@@ -13,7 +13,8 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,9 +24,11 @@
     "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4.2.4",
     "axios": "^1.16.0",
+    "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.5",
     "jsonpath-plus": "^10.4.0",
     "next": "^16.2.4",
+    "next-auth": "^5.0.0-beta.31",
     "nodemailer": "^8.0.7",
     "postcss": "^8.5.13",
     "prisma": "^5.22.0",
@@ -35,6 +38,7 @@
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/jsonpath": "^0.2.4",
     "@types/node": "^25.6.0",
     "@types/nodemailer": "^8.0.0",
