@@ -7,6 +7,7 @@ import SwRegister from "@/components/SwRegister";
 export const metadata: Metadata = {
   title: "ServiceBeat",
   description: "API Health Monitor",
+  manifest: "/manifest.json",
   icons: {
     icon: "/servicebeat-favicon.svg",
     apple: "/servicebeat-apple-touch-icon.png",
