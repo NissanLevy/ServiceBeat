@@ -13,8 +13,10 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:docker": "docker run --rm --network servicebeat_default -e DATABASE_URL=postgresql://servicebeat:servicebeat@postgres:5432/servicebeat servicebeat-worker npx prisma migrate dev",
     "db:generate": "prisma generate",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "seed:docker": "docker run --rm --network servicebeat_default --env-file .env -e DATABASE_URL=postgresql://servicebeat:servicebeat@postgres:5432/servicebeat servicebeat-worker npx tsx src/scripts/seed.ts"
   },
   "keywords": [],
   "author": "",
