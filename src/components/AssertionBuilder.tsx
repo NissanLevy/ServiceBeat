@@ -91,9 +91,17 @@ export default function AssertionBuilder({ assertions, onChange }: Props) {
               value={String(assertion.value)}
               onChange={(e) => {
                 const raw = e.target.value;
-                const value = (assertion.type === "status_code" || assertion.type === "response_time" || assertion.type === "ssl_expiry")
-                  ? Number(raw)
-                  : raw;
+                let value: string | number | boolean;
+                if (assertion.type === "status_code" || assertion.type === "response_time" || assertion.type === "ssl_expiry") {
+                  value = Number(raw);
+                } else if (assertion.type === "jsonpath") {
+                  if (raw === "true") value = true;
+                  else if (raw === "false") value = false;
+                  else if (raw !== "" && !isNaN(Number(raw))) value = Number(raw);
+                  else value = raw;
+                } else {
+                  value = raw;
+                }
                 update(i, { value } as Partial<Assertion>);
               }}
               placeholder={
