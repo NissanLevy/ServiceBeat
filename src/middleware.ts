@@ -15,8 +15,9 @@ export default auth((req) => {
   const isApiWithBearer =
     pathname.startsWith("/api/") &&
     req.headers.get("authorization")?.startsWith("Bearer ");
+  const isPublicFile = pathname === "/manifest.json" || pathname === "/sw.js";
 
-  if (isAuthRoute || isLoginPage || isStatusPage || isApiWithBearer) return NextResponse.next();
+  if (isAuthRoute || isLoginPage || isStatusPage || isApiWithBearer || isPublicFile) return NextResponse.next();
   if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.nextUrl));
 
   if (!isPasswordPage && !isPasswordApi) {
