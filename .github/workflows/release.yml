@@ -41,7 +41,7 @@ jobs:
         run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
       - name: Build & push web image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.web
@@ -51,7 +51,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/servicebeat:latest
 
       - name: Build & push worker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.worker
