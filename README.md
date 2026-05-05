@@ -1,17 +1,23 @@
 # ServiceBeat
 
-Self-hosted API health monitoring with custom assertions, multi-channel alerting, and incident tracking. Runs entirely in Docker.
+Self-hosted API health monitoring with custom assertions, multi-channel alerting, and incident tracking. Runs entirely in Docker. Installable as a PWA.
 
 ## Features
 
-- **Custom assertions** — check status codes, response body keywords, JSONPath values, and response time thresholds
-- **Multi-channel alerts** — email, Slack, and webhooks; fires on state change (triggered / resolved)
+- **Custom assertions** — check status codes, response body keywords, JSONPath values, response time thresholds, and SSL certificate expiry
+- **Request headers & body** — send custom headers and JSON/text body with each check
+- **Multi-channel alerts** — email, Slack, generic webhook, and PagerDuty; fires on state change (triggered / resolved)
+- **Consecutive failure threshold** — only alert after N consecutive failures to reduce noise
 - **Incident tracking** — automatically opens and closes incidents, tracks outage duration
+- **Maintenance windows** — schedule downtime windows per monitor; alerts are suppressed during active windows
+- **Pause / resume monitors** — disable a monitor without deleting it
 - **Services grouping** — organise monitors into services for a cleaner dashboard
 - **Public status page** — shareable `/status` page, no login required; per-monitor visibility control
+- **API tokens** — programmatic access to create, manage, and query monitors without a browser session
 - **User management** — multi-user with admin and member roles
 - **Password expiry** — passwords expire after 6 months and users are prompted to change them
-- **Uptime chart** — status timeline and response time graph per monitor
+- **Uptime chart** — status timeline and response time graph per monitor; uptime % shown on dashboard cards
+- **PWA** — installable as a desktop or mobile app directly from the browser
 
 ## Stack
 
@@ -135,6 +141,15 @@ npm run dev              # Next.js dev server (http://localhost:3000)
 npm run worker           # background check worker (separate terminal)
 ```
 
+### Windows — Postgres connection issue
+
+Docker Desktop on Windows routes `localhost` port mappings through a proxy that can reject Postgres connections before they reach the container. If `npm run db:migrate` fails with an authentication error even though credentials are correct, see [`docs/windows-docker-networking.md`](docs/windows-docker-networking.md) for the fix and workaround scripts:
+
+```bash
+npm run db:migrate:docker   # run migrations inside the container network
+npm run seed:docker         # run seed inside the container network
+```
+
 ## Assertion types
 
 | Type | What it checks | Operators |
@@ -143,19 +158,33 @@ npm run worker           # background check worker (separate terminal)
 | Keyword | Response body text | contains, not equals |
 | JSONPath | Value at a JSON path | eq, neq, contains, gt, lt |
 | Response Time | Round-trip time in ms | lt (under), gt (over) |
+| SSL Expiry | Days until certificate expires | min days remaining |
 
 Multiple assertions are evaluated independently — all failures are reported in a single check result.
 
 ## Alert channels
 
-| Channel | Config fields |
-|---|---|
-| Email | `to` |
-| Slack | `url` (incoming webhook URL) |
-| Webhook | `url` |
-| PagerDuty | `integrationKey` |
+| Channel | Config field | Notes |
+|---|---|---|
+| Email | `to` | Requires SMTP env vars |
+| Slack | `url` | Incoming webhook URL |
+| Webhook | `url` | POST JSON to any URL |
+| PagerDuty | `integrationKey` | Auto-resolves via dedup key |
 
-Alerts fire on state change: once when a monitor goes down (triggered) and once when it recovers (resolved).
+Alerts fire on state change: once when a monitor goes down (triggered) and once when it recovers (resolved). Use the **consecutive failure threshold** setting on each monitor to avoid alerts on transient blips.
+
+### Webhook payload
+
+```json
+{
+  "monitor": { "id": "...", "name": "My API", "url": "https://..." },
+  "type": "triggered",
+  "reason": "Status code 503",
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```
+
+Point this at Slack, Discord, Teams, n8n, Zapier, or any custom endpoint.
 
 ### PagerDuty setup
 
@@ -164,6 +193,34 @@ Alerts fire on state change: once when a monitor goes down (triggered) and once 
 3. On the monitor detail page, add an alert rule → select **PagerDuty** → paste the integration key
 
 ServiceBeat sends a `trigger` event when the monitor goes down and a `resolve` event when it recovers. Both use the monitor ID as the dedup key so PagerDuty automatically resolves the incident — no manual cleanup needed.
+
+## API tokens
+
+Generate tokens under the avatar menu → **API Tokens**. Use them to access the API without a browser session:
+
+```bash
+# List all monitors
+curl https://your-domain.com/api/monitors \
+  -H "Authorization: Bearer sb_..."
+
+# Get a monitor and its latest check result
+curl https://your-domain.com/api/monitors/<id> \
+  -H "Authorization: Bearer sb_..."
+
+# Create a monitor
+curl -X POST https://your-domain.com/api/monitors \
+  -H "Authorization: Bearer sb_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "My API", "url": "https://api.example.com/health", "method": "GET" }'
+
+# Pause a monitor
+curl -X PATCH https://your-domain.com/api/monitors/<id> \
+  -H "Authorization: Bearer sb_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "active": false }'
+```
+
+Tokens are stored as SHA-256 hashes and shown only once on creation. Revoke them at any time from the API Tokens page.
 
 ## Database access (pgAdmin)
 
