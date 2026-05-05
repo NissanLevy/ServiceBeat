@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { auth } from "@/auth";
 import UserMenu from "@/components/UserMenu";
+import SwRegister from "@/components/SwRegister";
 
 export const metadata: Metadata = {
   title: "ServiceBeat",
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           )}
         </nav>
         <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
+        <SwRegister />
       </body>
     </html>
   );
