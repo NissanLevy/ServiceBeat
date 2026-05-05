@@ -16,6 +16,7 @@ function formatDuration(ms: number): string {
 }
 
 export default async function DashboardPage() {
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
   const [monitors, services] = await Promise.all([
@@ -52,6 +53,7 @@ export default async function DashboardPage() {
 
       {monitors.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/servicebeat-empty-no-monitors.svg" alt="" className="w-20 h-20 mb-4 opacity-50" />
           <p className="text-gray-400 text-sm">No monitors yet. Create one to get started.</p>
         </div>

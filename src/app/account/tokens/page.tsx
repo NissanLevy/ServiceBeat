@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
+import Link from "next/link";
 
 interface Token {
   id: string;
@@ -55,7 +56,7 @@ export default function TokensPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <a href="/" className="text-sm text-gray-400 hover:text-white">← Back</a>
+        <Link href="/" className="text-sm text-gray-400 hover:text-white">← Back</Link>
         <h1 className="text-2xl font-bold mt-1">API Tokens</h1>
         <p className="text-sm text-gray-400 mt-1">
           Use tokens to access the API without a browser session.

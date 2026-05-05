@@ -213,6 +213,7 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
       <div className="mb-8 space-y-2">
         {incidents.length === 0 && (
           <div className="flex items-center gap-3 py-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/servicebeat-empty-no-incidents.svg" alt="" className="w-8 h-8 opacity-50" />
             <p className="text-gray-500 text-sm">No incidents recorded yet.</p>
           </div>

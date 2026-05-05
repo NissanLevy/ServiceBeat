@@ -14,6 +14,7 @@ function formatDuration(ms: number): string {
 }
 
 export default async function StatusPage() {
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
   const [monitors, services] = await Promise.all([
