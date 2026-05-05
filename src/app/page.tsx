@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     prisma.monitor.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        results: { orderBy: { timestamp: "desc" }, take: 1 },
+        results: { orderBy: { timestamp: "desc" }, take: 100 },
         service: true,
         incidents: { where: { resolvedAt: null }, take: 1 },
       },
@@ -101,6 +101,11 @@ function MonitorRow({ monitor, now }: MonitorRowProps) {
   const status = !monitor.active ? "paused" : !last ? "pending" : last.passed ? "up" : "down";
   const openIncident = monitor.incidents[0] ?? null;
 
+  const total = monitor.results.length;
+  const uptime = total > 0
+    ? ((monitor.results.filter((r) => r.passed).length / total) * 100).toFixed(1)
+    : null;
+
   return (
     <Link
       href={`/monitors/${monitor.id}`}
@@ -115,6 +120,9 @@ function MonitorRow({ monitor, now }: MonitorRowProps) {
           <span className="text-xs text-red-500">
             down {formatDuration(now - openIncident.startedAt.getTime())}
           </span>
+        )}
+        {uptime !== null && (
+          <span className="text-xs text-gray-500">{uptime}%</span>
         )}
         <span className="text-xs text-gray-500">every {monitor.interval}s</span>
         <StatusBadge status={status} />
