@@ -212,7 +212,10 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
       </h2>
       <div className="mb-8 space-y-2">
         {incidents.length === 0 && (
-          <p className="text-gray-500 text-sm">No incidents recorded yet.</p>
+          <div className="flex items-center gap-3 py-4">
+            <img src="/servicebeat-empty-no-incidents.svg" alt="" className="w-8 h-8 opacity-50" />
+            <p className="text-gray-500 text-sm">No incidents recorded yet.</p>
+          </div>
         )}
         {incidents.map((inc) => {
           const duration = inc.resolvedAt

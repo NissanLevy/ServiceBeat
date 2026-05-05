@@ -51,7 +51,10 @@ export default async function DashboardPage() {
       </div>
 
       {monitors.length === 0 && (
-        <p className="text-gray-400 text-sm">No monitors yet. Create one to get started.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <img src="/servicebeat-empty-no-monitors.svg" alt="" className="w-20 h-20 mb-4 opacity-50" />
+          <p className="text-gray-400 text-sm">No monitors yet. Create one to get started.</p>
+        </div>
       )}
 
       <div className="space-y-6">

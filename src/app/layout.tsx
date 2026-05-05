@@ -6,7 +6,15 @@ import UserMenu from "@/components/UserMenu";
 export const metadata: Metadata = {
   title: "ServiceBeat",
   description: "API Health Monitor",
-  icons: { icon: "/servicebeat-favicon.svg" },
+  icons: {
+    icon: "/servicebeat-favicon.svg",
+    apple: "/servicebeat-apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "ServiceBeat",
+    description: "API Health Monitor",
+    images: [{ url: "/servicebeat-og-image.png", width: 1200, height: 630 }],
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
