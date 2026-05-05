@@ -126,7 +126,9 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
             Started {openIncident.startedAt.toLocaleString("en-US", { timeZone: "UTC" })} UTC
           </p>
           {openIncident.failureReason && (
-            <p className="text-xs text-red-400 mt-1">{openIncident.failureReason.split("\n")[0]}</p>
+            <div className="text-xs text-red-400 mt-1 space-y-0.5">
+              {openIncident.failureReason.split("\n").map((line, i) => <p key={i}>{line}</p>)}
+            </div>
           )}
         </div>
       )}
@@ -236,7 +238,9 @@ export default async function MonitorDetailPage({ params }: { params: Promise<{ 
                 </div>
               </div>
               {inc.failureReason && (
-                <p className="text-xs text-red-400 mt-1.5 pl-5">{inc.failureReason.split("\n")[0]}</p>
+                <div className="text-xs text-red-400 mt-1.5 pl-5 space-y-0.5">
+                  {inc.failureReason.split("\n").map((line, i) => <p key={i}>{line}</p>)}
+                </div>
               )}
             </div>
           );

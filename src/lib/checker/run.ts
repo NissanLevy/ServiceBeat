@@ -57,8 +57,8 @@ function evaluate(
   if (assertion.type === "keyword") {
     if (!compare(assertion.operator, body, assertion.value))
       return assertion.operator === "contains"
-        ? `Response body does not contain "${assertion.value}"`
-        : `Response body should not contain "${assertion.value}"`;
+        ? `Response body does not contain "${assertion.value}" (body length: ${body.length} chars)`
+        : `Response body contains "${assertion.value}" but should not`;
     return null;
   }
 
@@ -68,8 +68,12 @@ function evaluate(
     if (!results || results.length === 0)
       return `JSONPath "${assertion.path}" returned no match`;
     const actual = results[0];
-    if (!compare(assertion.operator, actual, assertion.value))
-      return `JSONPath "${assertion.path}" = ${JSON.stringify(actual)} failed: expected ${assertion.operator} ${JSON.stringify(assertion.value)}`;
+    if (!compare(assertion.operator, actual, assertion.value)) {
+      const typeMismatch = typeof actual !== typeof assertion.value
+        ? ` (type mismatch: got ${typeof actual}, expected ${typeof assertion.value})`
+        : "";
+      return `JSONPath "${assertion.path}" = ${JSON.stringify(actual)} failed: expected ${assertion.operator} ${JSON.stringify(assertion.value)}${typeMismatch}`;
+    }
     return null;
   }
 
@@ -94,12 +98,23 @@ export async function runCheck(input: CheckInput): Promise<CheckOutput> {
   const start = Date.now();
 
   try {
+    let requestData = input.body;
+    const extraHeaders: Record<string, string> = {};
+    if (typeof input.body === "string" && input.body.trim()) {
+      try {
+        requestData = JSON.parse(input.body);
+        extraHeaders["Content-Type"] = "application/json";
+      } catch {
+        // not JSON, send as plain text
+      }
+    }
+
     const [response, sslDaysRemaining] = await Promise.all([
       axios.request({
         url: input.url,
         method: input.method,
-        headers: input.headers ?? {},
-        data: input.body,
+        headers: { ...extraHeaders, ...(input.headers ?? {}) },
+        data: requestData,
         validateStatus: () => true,
         timeout: 10000,
       }),

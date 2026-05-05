@@ -6,6 +6,6 @@
 #   192.168.1.100              <- LAN IP, Caddy uses self-signed cert
 #   localhost                  <- local only, self-signed cert
 
-your-domain.com {
+localhost {
     reverse_proxy web:3000
 }
