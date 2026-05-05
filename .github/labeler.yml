@@ -1,0 +1,35 @@
+frontend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - src/app/**
+      - src/components/**
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - src/app/api/**
+      - src/lib/**
+      - src/worker/**
+
+database:
+  - changed-files:
+    - any-glob-to-any-file:
+      - prisma/**
+
+docker:
+  - changed-files:
+    - any-glob-to-any-file:
+      - Dockerfile*
+      - docker-compose.yml
+      - docker/**
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "*.md"
+      - docs/**
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - .github/**
