@@ -1,38 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="480" height="110">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 56" width="256" height="56">
   <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@600&amp;family=Space+Mono:wght@400&amp;display=swap');
-    </style>
     <filter id="glow">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feGaussianBlur stdDeviation="1.4" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Shield icon -->
-  <g transform="translate(10, 5)">
-    <path d="M40 0 L80 15 L80 50 C80 72 60 87 40 97 C20 87 0 72 0 50 L0 15 Z"
-          fill="#111827"/>
-    <path d="M40 6 L74 19 L74 50 C74 69 56 83 40 91 C24 83 6 69 6 50 L6 19 Z"
-          fill="none" stroke="#1F2937" stroke-width="1"/>
+  <!-- Shield icon — larger, vertically centered -->
+  <g transform="translate(0, 0)">
+    <path d="M26 0 L52 10 L52 33 C52 47.5 39 57.5 26 63 C13 57.5 0 47.5 0 33 L0 10 Z"
+          fill="rgba(255,255,255,0.06)" stroke="rgba(16,185,129,0.25)" stroke-width="0.75"/>
     <!-- Pulse line -->
-    <line x1="9" y1="51" x2="19" y2="51" stroke="#10B981" stroke-width="2.8" stroke-linecap="round" filter="url(#glow)"/>
-    <polyline points="19,51 23,51 27,64 33,36 38,51 40,51 42,51 47,64 53,36 57,51 61,51"
-              fill="none" stroke="#10B981" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>
-    <line x1="61" y1="51" x2="71" y2="51" stroke="#10B981" stroke-width="2.8" stroke-linecap="round" filter="url(#glow)"/>
-    <circle cx="40" cy="12" r="3" fill="#10B981" opacity="0.8"/>
+    <line x1="6" y1="33.5" x2="12" y2="33.5" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
+    <polyline points="12,33.5 15,33.5 18,43 22,23 25,33.5 26,33.5 27,33.5 30,43 34,23 37,33.5 40,33.5"
+              fill="none" stroke="#10B981" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>
+    <line x1="40" y1="33.5" x2="46" y2="33.5" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
+    <circle cx="26" cy="8" r="2.2" fill="#10B981" opacity="0.9"/>
   </g>
 
-  <!-- Wordmark -->
-  <text x="106" y="64"
+  <!-- Wordmark — tighter letter-spacing, vertically centered -->
+  <text x="62" y="37"
         font-family="'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-        font-size="48" font-weight="600" fill="#111827" letter-spacing="-0.5">Service</text>
-  <text x="326" y="64"
-        font-family="'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-        font-size="48" font-weight="600" fill="#10B981" letter-spacing="-0.5">Beat</text>
-
-  <!-- Tagline -->
-  <text x="107" y="84"
-        font-family="'Space Mono', 'Courier New', monospace"
-        font-size="11" fill="#9CA3AF" letter-spacing="0.12em">MONITOR · ALERT · RESPOND</text>
+        font-size="26" font-weight="600" letter-spacing="-1">
+    <tspan fill="#F9FAFB">Service</tspan><tspan fill="#10B981">Beat</tspan>
+  </text>
 </svg>
