@@ -6,6 +6,7 @@ import UserMenu from "@/components/UserMenu";
 export const metadata: Metadata = {
   title: "ServiceBeat",
   description: "API Health Monitor",
+  icons: { icon: "/servicebeat-favicon.svg" },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,8 +17,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="bg-gray-950 text-gray-100 min-h-screen">
         <nav className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <a href="/" className="text-lg font-semibold tracking-tight text-white">
-              ServiceBeat
+            <a href="/" className="flex items-center gap-2">
+              <img src="/servicebeat-logo.svg" alt="ServiceBeat" className="h-7 w-auto" />
             </a>
             {session?.user && (
               <>
