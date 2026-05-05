@@ -11,10 +11,12 @@ export default auth((req) => {
   const isLoginPage = pathname === "/login";
   const isPasswordPage = pathname === "/account/password";
   const isPasswordApi = pathname === "/api/account/password";
-
   const isStatusPage = pathname.startsWith("/status");
+  const isApiWithBearer =
+    pathname.startsWith("/api/") &&
+    req.headers.get("authorization")?.startsWith("Bearer ");
 
-  if (isAuthRoute || isLoginPage || isStatusPage) return NextResponse.next();
+  if (isAuthRoute || isLoginPage || isStatusPage || isApiWithBearer) return NextResponse.next();
   if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.nextUrl));
 
   if (!isPasswordPage && !isPasswordApi) {

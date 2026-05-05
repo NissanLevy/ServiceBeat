@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scheduleMonitor, removeMonitor } from "@/lib/queue/jobs";
+import { validateApiToken } from "@/lib/apiToken";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function authorized(req: Request): Promise<boolean> {
+  const bearer = req.headers.get("authorization");
+  if (bearer?.startsWith("Bearer ")) return validateApiToken(bearer.slice(7));
+  return true;
+}
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!await authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const monitor = await prisma.monitor.findUnique({
     where: { id },
@@ -13,6 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!await authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const body = await req.json();
 
@@ -41,7 +50,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   return NextResponse.json(monitor);
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!await authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await removeMonitor(id);
   await prisma.monitor.delete({ where: { id } });

@@ -47,6 +47,13 @@ export default function UserMenu({ email, role }: Props) {
           </div>
           <div className="py-1">
             <a
+              href="/account/tokens"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+            >
+              API Tokens
+            </a>
+            <a
               href="/account/password"
               onClick={() => setOpen(false)}
               className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
