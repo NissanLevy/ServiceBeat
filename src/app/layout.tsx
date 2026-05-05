@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { auth } from "@/auth";
-import SignOutButton from "@/components/SignOutButton";
+import UserMenu from "@/components/UserMenu";
 
 export const metadata: Metadata = {
   title: "ServiceBeat",
@@ -36,13 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             )}
           </div>
           {session?.user && (
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-gray-500">{session.user.email}</span>
-              <a href="/account/password" className="text-xs text-gray-400 hover:text-white">
-                Change password
-              </a>
-              <SignOutButton />
-            </div>
+            <UserMenu email={session.user.email!} role={session.user.role ?? "member"} />
           )}
         </nav>
         <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
