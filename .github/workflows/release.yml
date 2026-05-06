@@ -38,7 +38,9 @@ jobs:
 
       - name: Extract version tag
         id: meta
-        run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+        run: |
+          echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Build & push web image
         uses: docker/build-push-action@v7
@@ -47,8 +49,8 @@ jobs:
           file: Dockerfile.web
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/servicebeat:${{ steps.meta.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/servicebeat:latest
+            ghcr.io/${{ steps.meta.outputs.owner }}/servicebeat:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/servicebeat:latest
 
       - name: Build & push worker image
         uses: docker/build-push-action@v7
@@ -57,5 +59,5 @@ jobs:
           file: Dockerfile.worker
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/servicebeat-worker:${{ steps.meta.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/servicebeat-worker:latest
+            ghcr.io/${{ steps.meta.outputs.owner }}/servicebeat-worker:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/servicebeat-worker:latest
